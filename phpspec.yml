@@ -1,0 +1,5 @@
+suites:
+    default:
+        namespace: Knd\Bundle\RadBundle
+        psr4_prefix: Knd\Bundle\RadBundle
+        src_path: .

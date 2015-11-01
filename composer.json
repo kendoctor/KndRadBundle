@@ -23,7 +23,8 @@
         "symfony/swiftmailer-bundle":         "~2.3",
         "doctrine/orm":                       "~2.4",
         "doctrine/doctrine-fixtures-bundle":  "*",
-        "twig/twig":                          "~1"
+        "twig/twig":                          "~1",
+        "knplabs/knp-paginator-bundle":       "^2.4"
     },
     "suggest": {
         "symfony/form":                      "To take advantage of the Rad Form Manager",
@@ -36,7 +37,6 @@
         "bin-dir": "bin"
     },
     "autoload": {
-        "psr-0": { "Knd\\RadBundle": "" }
-    },
-    "target-dir": "Knd/RadBundle"
+        "psr-4": { "Knd\\Bundle\\RadBundle\\": "" }
+    }
 }

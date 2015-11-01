@@ -38,5 +38,6 @@
     },
     "autoload": {
         "psr-4": { "Knd\\Bundle\\RadBundle\\": "" }
-    }
+    },
+    "target-dir": "Knd/Bundle/RadBundle"
 }

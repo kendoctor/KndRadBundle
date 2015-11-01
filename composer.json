@@ -1,0 +1,42 @@
+{
+    "name": "kendoctor/knd-rad-bundle",
+    "description": "The Kendoctor Rad Edition bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "kendoctor",
+            "email": "kendoctor@163.com"
+        }
+    ],
+    "require": {
+        "php":                      ">=5.4",
+        "symfony/symfony":          "~2.4",
+        "nelmio/alice":             "~1.5",
+        "fzaninotto/faker":         "~1.2"
+    },
+    "require-dev": {
+        "behat/behat":                        "~3.0",
+        "behat/mink-extension":               "~2.0",
+        "behat/mink-goutte-driver":           "~1.0",
+        "behat/mink-selenium2-driver":        "~1.1",
+        "phpspec/phpspec":                    "~2.0",
+        "symfony/swiftmailer-bundle":         "~2.3",
+        "doctrine/orm":                       "~2.4",
+        "doctrine/doctrine-fixtures-bundle":  "*",
+        "twig/twig":                          "~1"
+    },
+    "suggest": {
+        "symfony/form":                      "To take advantage of the Rad Form Manager",
+        "symfony/security":                  "To take advantage of the Rad User Interface",
+        "doctrine/doctrine-fixtures-bundle": "To Take advantage of the Rad Doctrine AbstractFixture",
+        "symfony/swiftmailer-bundle":        "To take advantage of the Rad mailer logger in your tests",
+        "doctrine/orm":                      "To take advantage of the Rad password hash updater listener"
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "autoload": {
+        "psr-0": { "Knd\\RadBundle": "" }
+    },
+    "target-dir": "Knd/RadBundle"
+}

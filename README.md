@@ -111,119 +111,46 @@ You should follow naming convention:
 
 > double ``_`` represents ``.``
 
-    
-如果存在类``User``，实现了 ``AutoInjectManagerByFactoryInterface``
 
-     namespace AppBundle\Entity;
-     class User implements AutoInjectManagerByFactoryInterface
-     {
-     }
+###Auto Inject Repository of Entity Class###
+
+If you have an entity class:
+
+    namespace AppBundle\Entity;
+    use Knd\Bundle\RadBundle\TagInterface\AutoInjectDoctrineRepositoryInterface;
     
+    class User implements AutoInjectDoctrineRepositoryInterface
+    {
+    }
+    
+This will be same as:
+
     services:
-        knd.factory.manager:
-            class: Knd\Bundle\RadBundle\Manager\ManagerFactory
-            arguments:
-                - @entity_manager
-                - @knp_paginator    
-                         
-        app.manager.user
-            class: Knd\Bundle\RadBundle\Manager\Manager
-            factory: [@knd.factory.manager, create]
-            arguments:
-                - %app.class.user%
-                
-如果存在类``User``，实现了 ``AutoInjectClassParameterInterface``
+        app.repository.user:
+            factory: [@doctrine, getRepository]
+            arguments: [%app.class.entity.user%]
 
-     namespace AppBundle\Entity;
-     class User implements AutoInjectClassParameterInterface
-     {
-     }
-    
-    $className = $container->getParameter('app.class.entity_user');
-    
-如果存在类``User``，实现了 ``AutoInjectServiceInterface``
 
-    namespace AppBundle\Manager\UserManager;
+###Auto Inject Manager of Class###
+
+If you have an entity class:
+
+    namespace AppBundle\Entity;
+    use Knd\Bundle\RadBundle\TagInterface\AutoInjectManagerByFactoryInterface;
     
-    class UserManager implements AutoInjectServiceInterface
+    class User implements AutoInjectManagerByFactoryInterface
     {
     }
-     
-    app.manager.user:
-        class: AppBundle\Manager\UserManager
-            arguments: []
-    
-                    
-This will produce a parameter in container ``app.class.entity_user`` referencing class
-``AppBundle\Entity\User``
 
-    $className = $container->getParameter('app.class.entity_user');
-    //className == AppBundle\Entity\User
-    
-This also can be used as argument for service
+This will be same as:
 
-    class: somethingClass
-    arguments: [ %app.class.entity_user% ]
-    
-If you want to inject a class into container, implements KndRadServiceDiInterface
-
-    namespace AppBundle\Manager;
-    
-    class UserManager implements KndRadServiceDiInterface
-    {
-        public function __construct()
-        {
-        }
-    }
-    
-This will inject ``UserManager`` as service ``app.manager.user``
-
-    class: AppBundle\Manager\UserManager
-    arguments: []
-    
-
-If class constructor has parameters like this:
-
-    /**
-     *
-     * @Knd\DiParams({normal = '2', diParameter='%app.class.name%', diService= '@serviceId' })
-    **/
-    public function __construct($normal, $diParameter, $diService)
-    {
-    }
-    
-    public function __construct($p_app__class__name_something, $s_app__manager__user)
-    {
-    }
-    
-
-    interface ManagerInterface
-    {
-        public function getClass();
-        public function create();
-        public function getRepository();
-        public function getObjectManager();
-        //public function createByType();
-        public function getBuilder();
-        public function getFormBuilder();
-    }
-    
     services:
-        knd.factory.manager:
-            class: Knd\Bundle\RadBundle\Manager\ManagerFactory
-            
-        app.manager.user
-            class: Knd\Bundle\RadBundle\Manager\Manager
-            factory: [@knd.factory.manager, create]
-            arguments:
-                - %app.class.user%
-                - @entity_manager
-                - @knp_paginator
-
-   
-
+        app.manager.user:
+            factory: [@knd_rad.factory.manager, create]
+            arguments: [%app.class.entity.user%]
     
-        
+
+
 
 ##Configuration##
 

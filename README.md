@@ -57,7 +57,7 @@ This will inject name of class ``User`` as container parameter. Same as below:
     //.../config.yml
     
     parameters:
-        app.class.entity.user
+        app.class.entity.user: AppBundle\Entity\User
     
 Other possibilities:
 
@@ -70,6 +70,46 @@ It can be used as arguments for services
         arguments: [%app.class.entity.user%]
     
 ###Auto Inject Class As Service###
+
+    namespace AppBundle\Builder;
+    use Knd\Bundle\RadBundle\TagInterface\AutoInjectServiceInterface;
+    
+    class ProductBuilder implements AutoInjectServiceInterface
+    {
+    }
+    
+This will inject class ``ProductBuilder`` as a service, same as:
+
+    services:
+        app.builder.product:
+            class: AppBundle\Builder\ProductBuilder
+            arguments: []
+
+If class constructor has parameters, for example:
+    
+    public function __construct(
+        $p_app__class__entity__user,
+        EntityManager $s_doctrine__orm__entity_manager
+    )
+    {
+    }
+    
+This will be:
+
+    services:
+        app.builder.product:
+            class: AppBundle\Builder\ProductBuilder
+            arguments:
+                - %app.class.entity.user%
+                - @doctrine.orm.entity_manager
+
+You should follow naming convention: 
+
+> ``$p_`` will be container parameter
+ 
+> ``$s_`` will be a service 
+
+> double ``_`` represents ``.``
 
     
 如果存在类``User``，实现了 ``AutoInjectManagerByFactoryInterface``

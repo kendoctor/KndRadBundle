@@ -4,18 +4,73 @@ Rapid Application Development bundle for Symfony2 inspired by KnpRadBundle
 
 ##Features###
 
- 1. Tag class for service dependency injection.
+ 1. Mark class for auto dependency injection via tag interface.
  2. Simple Routing definition
 
 
-##Usage##
+##Installation##
 
-If you want to get className from container, implements KndRadClassDiInterface
+    composer require knd/rad-bundle
+    
+Via composer install 
 
-    namespace AppBundle\Entity;
-    class User implements KndRadClassDiInterface
+    class AppKernel extends Kernel
+    {
+        public function registerBundles()
+        {
+            $bundles = array(
+                ...
+                new \Knd\Bundle\RadBundle\KndRadBundle(),
+                ...
+            );
+    
+        }
+        ...
+    }
+    
+Config in ``AppKernel``
+
+If you have a Bundle ``AppBundle``, follow as below
+
+    namespace AppBundle;
+    use Knd\Bundle\RadBundle\Bundle\Bundle;
+    
+    class AppBundle extends Bundle
     {
     }
+    
+##Auto Dependency Injection##
+
+Tag class as DI service, it will be automatically injected into container.
+
+###Auto Inject Class As Container Parameter###
+
+    namespace AppBundle\Entity;
+    use Knd\Bundle\RadBundle\TagInterface\AutoInjectClassParameterInterface;
+    
+    class User implements AutoInjectClassParameterInterface
+    {
+    }
+    
+This will inject name of class ``User`` as container parameter. Same as below:
+
+    //.../config.yml
+    
+    parameters:
+        app.class.entity.user
+    
+Other possibilities:
+
+    AppBundle\Entity\Question\Selection => app.class.entity.question_selection
+    
+It can be used as arguments for services
+    
+    services:
+        class: someClass
+        arguments: [%app.class.entity.user%]
+    
+###Auto Inject Class As Service###
+
     
 如果存在类``User``，实现了 ``AutoInjectManagerByFactoryInterface``
 

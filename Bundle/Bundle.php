@@ -13,4 +13,9 @@ class Bundle extends BaseBundle
         $container->addCompilerPass(new RegisterAutoInjectServicePass($this));
     }
 
+    public function getAlias()
+    {
+        return strtolower(str_replace('Bundle', '', $this->getName()));
+    }
+
 }

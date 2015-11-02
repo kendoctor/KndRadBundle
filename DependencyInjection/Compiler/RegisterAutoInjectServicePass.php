@@ -2,6 +2,7 @@
 
 namespace Knd\Bundle\RadBundle\DependencyInjection\Compiler;
 
+use Knd\Bundle\RadBundle\DependencyInjection\DefinitionFactory;
 use Knd\Bundle\RadBundle\DependencyInjection\ServiceIdGenerator;
 use Knd\Bundle\RadBundle\Finder\ClassFinder;
 use Knd\Bundle\RadBundle\Reflection\ReflectionFactory;
@@ -15,6 +16,7 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
     private $classFinder;
     private $serviceIdGenerator;
     private $reflectionFactory;
+    private $definitionFactory;
 
     public function __construct(BundleInterface $bundle, ClassFinder $classFinder = null,  $definitionFactory = null, ServiceIdGenerator $serviceIdGenerator = null)
     {
@@ -22,6 +24,7 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
         $this->classFinder        = $classFinder ?: new ClassFinder;
         $this->serviceIdGenerator = $serviceIdGenerator ?: new ServiceIdGenerator();
         $this->reflectionFactory  = new ReflectionFactory();
+        $this->definitionFactory = $definitionFactory ?: new DefinitionFactory();
     }
 
 
@@ -55,22 +58,75 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
             $classes = $this->classFinder->findClasses($directory, $namespace);
 
             foreach ($classes as $class) {
+                $classContainerParameter = null;
+
                 $reflClass = $this->reflectionFactory->createReflectionClass($class);
                 if($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectClassParameterInterface'))
                 {
                     if (!strpos($class, $this->bundle->getNamespace()) === 0) {
                         continue;
                     }
-                    $id = $this->serviceIdGenerator->generateClassContainerParameter($this->bundle, $class, 'repository');
+                    $classContainerParameter = $this->serviceIdGenerator->generateClassContainerParameter($this->bundle, $class);
 
-                    if ($container->hasParameter($id)) {
+                    if ($container->hasParameter($classContainerParameter)) {
                         continue;
                     }
 
-                    $container->setParameter($id, $class);
+                    $container->setParameter($classContainerParameter, $class);
                 }
 
+                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectServiceInterface')) {
 
+                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+                        continue;
+                    }
+
+                    $id = $this->serviceIdGenerator->generateServiceId($this->bundle, $class);
+
+                    if ($container->hasDefinition($id)) {
+                        continue;
+                    }
+
+                    $def = $this->definitionFactory->createDefinition($classContainerParameter);
+
+                    $container->setDefinition($id, $def);
+
+                }
+
+                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectDoctrineRepositoryInterface')) {
+
+                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+                        continue;
+                    }
+                    $id = $this->serviceIdGenerator->generateClassRepositoryId($this->bundle, $class);
+
+                    if ($container->hasDefinition($id)) {
+                        continue;
+                    }
+
+                    $def = $this->definitionFactory->createDoctrineRepositoryDefinition($classContainerParameter);
+
+                    $container->setDefinition($id, $def);
+
+                }
+
+                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectManagerByFactoryInterface')) {
+
+                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+                        continue;
+                    }
+
+                    $id = $this->serviceIdGenerator->generateClassManagerId($this->bundle, $class);
+
+                    if ($container->hasDefinition($id)) {
+                        continue;
+                    }
+
+                    $def = $this->definitionFactory->createClassManagerDefinition($classContainerParameter);
+
+                    $container->setDefinition($id, $def);
+
+                }
 
             }
 

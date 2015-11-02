@@ -4,8 +4,17 @@ namespace Knd\Bundle\RadBundle\Manager;
 
 class ManagerFactory
 {
-    public function create()
-    {
+    protected $knpPaginator;
+    protected $entityManager;
 
+    public function __construct($entityManager, $knpPaginator = null)
+    {
+        $this->entityManager = $entityManager;
+        $this->knpPaginator = $knpPaginator;
+    }
+
+    public function create($class)
+    {
+        return new Manager($class, $this->entityManager, $this->knpPaginator);
     }
 }

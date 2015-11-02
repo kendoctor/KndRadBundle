@@ -5,7 +5,8 @@
  * Date: 15/11/2
  * Time: 上午2:37
  */
+namespace Knd\Bundle\RadBundle\TagInterface;
 
-interface AutoInjectManagerByFactoryInterface {
+interface AutoInjectManagerByFactoryInterface extends AutoInjectClassParameterInterface {
 
 }

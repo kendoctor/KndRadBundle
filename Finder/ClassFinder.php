@@ -8,13 +8,11 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class ClassFinder
 {
-    private $finder;
     private $filesystem;
     private $reflectionFactory;
 
-    public function __construct(Finder $finder = null, Filesystem $filesystem = null, ReflectionFactory $reflectionFactory = null)
+    public function __construct(Filesystem $filesystem = null, ReflectionFactory $reflectionFactory = null)
     {
-        $this->finder = $finder ?: new Finder();
         $this->filesystem = $filesystem ?: new Filesystem();
         $this->reflectionFactory = $reflectionFactory ?: new ReflectionFactory();
     }
@@ -27,11 +25,12 @@ class ClassFinder
 
         $classes = array();
 
-        $this->finder->files();
-        $this->finder->name('*.php');
-        $this->finder->in($directory);
+        $finder = new Finder();
+        $finder->files();
+        $finder->name('*.php');
+        $finder->in($directory);
 
-        foreach ($this->finder->getIterator() as $name) {
+        foreach ($finder->getIterator() as $name) {
             $baseName = substr($name, strlen($directory)+1, -4);
             $baseClassName = str_replace('/', '\\', $baseName);
 

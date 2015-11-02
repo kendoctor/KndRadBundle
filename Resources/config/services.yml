@@ -1,0 +1,6 @@
+
+services:
+    knd_rad.factory.manager:
+        class: Knd\Bundle\RadBundle\Manager\ManagerFactory
+        arguments:
+            - @doctrine.orm.entity_manager

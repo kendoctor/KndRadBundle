@@ -7,6 +7,41 @@ use Symfony\Component\DependencyInjection\Container;
 
 class ServiceIdGenerator
 {
+    /**
+     *  AppBundle\Manager\UserManager => 'app.manager.user'
+     *  AppBundle\Manager\Sub\UserManager => 'app.manager.sub_user'
+     *  AppBundle\Manager\Sub\UserManage => 'app.manager.sub_user_manage'
+     *
+     *
+     * @param $bundleClass
+     * @return mixed
+     */
+    protected function makeParentDirAsClassifier($bundleClass, $removeClassifier = false)
+    {
+        $return = strtolower($bundleClass);
+        $classifierToken = null;
+
+        $tokens = explode('\\', $bundleClass);
+        if(count($tokens) > 1)
+        {
+            $classifierToken = array_shift($tokens);
+            if(!$removeClassifier) {
+                $lastToken = array_pop($tokens);
+                if ($classifierToken != $lastToken) {
+                    $lastToken = str_replace($classifierToken, '', $lastToken);
+                    array_push($tokens, $lastToken);
+                }
+                $return = sprintf('%s.%s', $classifierToken, implode($tokens, '\\'));
+            }
+            else
+            {
+                $return = implode($tokens, '\\');
+            }
+        }
+
+        return str_replace('\\', '_', Container::underscore($return));
+    }
+
     public function generateClassContainerParameter(BundleInterface $bundle, $className)
     {
         $namespace = $bundle->getNamespace();
@@ -14,28 +49,38 @@ class ServiceIdGenerator
 
         $bundleClass = substr($className, strlen($namespace) + 1);
 
-        $bundlePart = str_replace('\\', '_', Container::underscore($bundleClass));
-
-        return sprintf('%s.class.%s', $alias, $bundlePart);
+        return sprintf('%s.class.%s', $alias, $this->makeParentDirAsClassifier($bundleClass));
 
     }
 
-    public function generateForBundleClass(BundleInterface $bundle, $className, $withSuffix = false)
+    public function generateClassManagerId(BundleInterface $bundle, $className)
     {
         $namespace = $bundle->getNamespace();
-        $extension = $bundle->getContainerExtension();
-
-        $extensionAlias = $bundle->getAlias();
-
+        $alias = $bundle->getAlias();
 
         $bundleClass = substr($className, strlen($namespace) + 1);
 
-        $bundlePart = str_replace('\\', '.', Container::underscore($bundleClass));
-
-        if (false !== $withSuffix) {
-            $bundlePart .= '_'.$withSuffix;
-        }
-
-        return sprintf('%s.%s', $extensionAlias, $bundlePart);
+        return sprintf('%s.manager.%s', $alias, $this->makeParentDirAsClassifier($bundleClass, true));
     }
+
+    public function generateClassRepositoryId(BundleInterface $bundle, $className)
+    {
+        $namespace = $bundle->getNamespace();
+        $alias = $bundle->getAlias();
+
+        $bundleClass = substr($className, strlen($namespace) + 1);
+
+        return sprintf('%s.repository.%s', $alias, $this->makeParentDirAsClassifier($bundleClass, true));
+    }
+
+    public function generateServiceId(BundleInterface $bundle, $className)
+    {
+        $namespace = $bundle->getNamespace();
+        $alias = $bundle->getAlias();
+
+        $bundleClass = substr($className, strlen($namespace) + 1);
+
+        return sprintf('%s.%s', $alias, $this->makeParentDirAsClassifier($bundleClass));
+    }
+
 }

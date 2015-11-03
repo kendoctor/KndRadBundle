@@ -4,7 +4,7 @@ Rapid Application Development bundle for Symfony2 inspired by KnpRadBundle
 
 ##Features###
 
- 1. Mark class for auto dependency injection via tag interface.
+ 1. Inject classes of specified directories as services.
  2. Simple Routing definition
 
 
@@ -41,123 +41,128 @@ If you have a Bundle ``AppBundle``, follow as below
     
 ##Auto Dependency Injection##
 
-Tag class as DI service, it will be automatically injected into container.
+###Auto Inject Entity Related Services###
 
-###Auto Inject Class As Container Parameter###
-
-    namespace AppBundle\Entity;
-    use Knd\Bundle\RadBundle\TagInterface\AutoInjectClassParameterInterface;
-    
-    class User implements AutoInjectClassParameterInterface
-    {
-    }
-    
-This will inject name of class ``User`` as container parameter. Same as below:
-
-    //.../config.yml
-    
-    parameters:
-        app.class.entity.user: AppBundle\Entity\User
-    
-Other possibilities:
-
-    AppBundle\Entity\Question\Selection => app.class.entity.question_selection
-    
-It can be used as arguments for services
-    
-    services:
-        some_service_id:
-            class: someClass
-            arguments: [%app.class.entity.user%]
-    
-###Auto Inject Class As Service###
-
-    namespace AppBundle\Builder;
-    use Knd\Bundle\RadBundle\TagInterface\AutoInjectServiceInterface;
-    
-    class ProductBuilder implements AutoInjectServiceInterface
-    {
-    }
-    
-This will inject class ``ProductBuilder`` as a service, same as:
-
-    services:
-        app.builder.product:
-            class: AppBundle\Builder\ProductBuilder
-            arguments: []
-
-If class constructor has parameters, for example:
-    
-    public function __construct(
-        $p_app__class__entity__user,
-        EntityManager $s_doctrine__orm__entity_manager
-    )
-    {
-    }
-    
-This will be:
-
-    services:
-        app.builder.product:
-            class: AppBundle\Builder\ProductBuilder
-            arguments:
-                - %app.class.entity.user%
-                - @doctrine.orm.entity_manager
-
-You should follow naming convention: 
-
-> ``$p_`` will be container parameter
- 
-> ``$s_`` will be a service 
-
-> double ``_`` represents ``.``
-
-
-###Auto Inject Repository of Entity Class###
-
-If you have an entity class:
+Default Entity Directory is ``xxxBundle\Entity``, for example:
 
     namespace AppBundle\Entity;
-    use Knd\Bundle\RadBundle\TagInterface\AutoInjectDoctrineRepositoryInterface;
     
-    class User implements AutoInjectDoctrineRepositoryInterface
+    class User
     {
     }
     
-This will be same as:
+The class name of ``User`` injected into container as parameter.
 
-    services:
-        app.repository.user:
-            factory: [@doctrine, getRepository]
-            arguments: [%app.class.entity.user%]
-
-
-###Auto Inject Manager of Class###
-
-If you have an entity class:
-
-    namespace AppBundle\Entity;
-    use Knd\Bundle\RadBundle\TagInterface\AutoInjectManagerByFactoryInterface;
+    app.class.entity.user
     
-    class User implements AutoInjectManagerByFactoryInterface
-    {
-    }
+You can access its class name via container:
 
-This will be same as:
+    $container->getParameter('app.class.entity.user') => AppBundle\Entity\User
+    
+    
+By default, doctrine repository and manager service of ``User`` entity injected, just as below:
 
     services:
         app.manager.user:
+            class: Knd\Bundle\RadBundle\Manager\Manager
             factory: [@knd_rad.factory.manager, create]
+            arguments: [%app.class.entity.user%]    
+                 
+        app.repository.user:
+            class: Doctrine\Common\Persistence\ObjectRepository
+            factory: [@doctrine, getRepository]
             arguments: [%app.class.entity.user%]
+
+Others possibilities:
+
+    AppBundle\Entity\Question\Selection => app.class.entity.question_selection
+    manager service => app.manager.question_selection
+    repository service => app.repository.question_selection
+    
+###Auto Inject Form Type Services###
+
+Default Form Type Directory is ``xxxBundle\Form``, for example:
+
+    namespace AppBundle\Form;
+    
+    class UserType extends AbstractType
+    {
+    }
+    
+Classes should implements ``Symfony\Component\Form\FormTypeInterface``, just as below:
+
+    services:
+        app.form.type.user:
+            class: %app.class.form.user_type%
+            tags: { name: form.type, alias: app_user }
+            
+Others possibilities:
+    
+    AppBundle\Form\Question\SelectionType => app.class.form.question_selection_type
+    form type service => app.form.type.question_selection
+    
+###Auto Inject Common Classes As Services###
+
+Default common classes directories has ``xxxBundle\Manager``, for example:
+
+    namespace AppBundle\Manager;
+
+    class UserManager extend Manager
+    {
+    }
+    
+It will inject ``UserManager`` as service:
+    
+    services:
+        app.manager.user:
+            class: %app.class.manager.user%
+            
+If ``UserManager`` constructor has parameters:
+        
+        public function __construct(
+                $p_app__class__entity__user,
+                EntityManager $s_doctrine__orm__entity_manager
+            )
+        {
+        }
+        
+It will inject as below:
+
+    services:
+        app.manager.user:
+            class: %app.class.manager.user%
+            arguments: 
+                - %app.class.entity.user%
+                - @doctrine.orm.entity_manager
+        
+You should follow naming convention:
+ 
+    > ``$p_`` will be container parameter
+     
+    > ``$s_`` will be a service 
+    
+    > double ``_`` represents ``.``
     
 
+> **NOTE**
 
+Add new class into the specified directories, you should clear cache
 
+    php app/console cache:clear
+    
 ##Configuration##
 
     knd_rad:
-        auto_di:
-            include_dir : [ Entity, Repository, Manager, Form ]
-        name_convention: ~
-        
+        auto_inject:
+            entity:
+                dirs: [Entity] 
+                manager: true #auto inject manager, you can bypass via creating service with same service id
+                repository: true #auto inject doctrine repository
+                ignore_suffix: [Repository] #exclude classes suffixed with Repository
+            form_type:
+                dirs: [Form]
+            common:
+                dirs: [Manager]
+                classes: []
+              
             

@@ -57,6 +57,13 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
 
         foreach($this->getClasses($config['dirs'], $config['ignore_suffix']) as $class)
         {
+            $reflClass = $this->reflectionFactory->createReflectionClass($class);
+
+            if($reflClass->isAbstract())
+            {
+                continue;
+            }
+
             $classContainerParameter = $this->injectClassContainerParameter($container, $class);
 
             if($config['repository'])
@@ -120,6 +127,11 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
 
             $reflClass = $this->reflectionFactory->createReflectionClass($class);
 
+            if($reflClass->isAbstract())
+            {
+                continue;
+            }
+
             if ($reflClass->implementsInterface('Symfony\Component\Form\FormTypeInterface')) {
 
                     if (!strpos($class, $this->bundle->getNamespace()) === 0) {
@@ -152,6 +164,13 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
 
         foreach($this->getClasses($config['dirs']) as $class)
         {
+            $reflClass = $this->reflectionFactory->createReflectionClass($class);
+
+            if($reflClass->isAbstract())
+            {
+                continue;
+            }
+            
             if (!strpos($class, $this->bundle->getNamespace()) === 0) {
                 continue;
             }

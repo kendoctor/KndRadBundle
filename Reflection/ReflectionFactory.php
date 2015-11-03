@@ -9,6 +9,17 @@ class ReflectionFactory
         return new \ReflectionClass($class);
     }
 
+    public function getConstructorParameters($class)
+    {
+        if(method_exists($class, '__construct'))
+        {
+            $r = new \ReflectionMethod($class, '__construct');
+            return $r->getParameters();
+        }
+
+        return array();
+    }
+
     public function getParameters($controller)
     {
         if (is_array($controller)) {

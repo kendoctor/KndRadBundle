@@ -53,6 +53,30 @@ class ServiceIdGenerator
 
     }
 
+    public function generateFormTypeId(BundleInterface $bundle, $className)
+    {
+        $namespace = $bundle->getNamespace();
+        $alias = $bundle->getAlias();
+
+        $bundleClass = substr($className, strlen($namespace) + 1);
+
+        $return =  sprintf('%s.form.type.%s', $alias, $this->makeParentDirAsClassifier($bundleClass, true));
+
+        return preg_replace('/_type$/', '', $return);
+    }
+
+    public function generateFormTypeAlias(BundleInterface $bundle, $className)
+    {
+        $namespace = $bundle->getNamespace();
+        $alias = $bundle->getAlias();
+
+        $bundleClass = substr($className, strlen($namespace) + 1);
+
+        $return =  sprintf('%s_%s', $alias, $this->makeParentDirAsClassifier($bundleClass, true));
+
+        return preg_replace('/_type$/', '', $return);
+    }
+
     public function generateClassManagerId(BundleInterface $bundle, $className)
     {
         $namespace = $bundle->getNamespace();

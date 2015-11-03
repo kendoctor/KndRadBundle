@@ -66,8 +66,9 @@ Other possibilities:
 It can be used as arguments for services
     
     services:
-        class: someClass
-        arguments: [%app.class.entity.user%]
+        some_service_id:
+            class: someClass
+            arguments: [%app.class.entity.user%]
     
 ###Auto Inject Class As Service###
 

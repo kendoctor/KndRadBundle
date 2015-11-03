@@ -61,6 +61,10 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
                 $classContainerParameter = null;
 
                 $reflClass = $this->reflectionFactory->createReflectionClass($class);
+
+                if($reflClass->isAbstract())
+                    continue;
+
                 if($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectClassParameterInterface'))
                 {
                     if (!strpos($class, $this->bundle->getNamespace()) === 0) {
@@ -87,7 +91,7 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
                         continue;
                     }
 
-                    $def = $this->definitionFactory->createDefinition($classContainerParameter);
+                    $def = $this->definitionFactory->createDefinition($class, $classContainerParameter);
 
                     $container->setDefinition($id, $def);
 
@@ -125,6 +129,38 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
                     $def = $this->definitionFactory->createClassManagerDefinition($classContainerParameter);
 
                     $container->setDefinition($id, $def);
+
+                }
+
+                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectFormTypeInterface')
+                    && $reflClass->implementsInterface('Symfony\Component\Form\FormTypeInterface')
+                ) {
+
+                    if (false !== $container->hasDefinition('form.extension')) {
+
+                        if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+                            continue;
+                        }
+
+                        $id = $this->serviceIdGenerator->generateFormTypeId($this->bundle, $class);
+
+                        if ($container->hasDefinition($id)) {
+                            continue;
+                        }
+
+                        $types   = $container->getDefinition('form.extension')->getArgument(1);
+
+
+                        $def = $this->definitionFactory->createFormTypeDefinition($class, $classContainerParameter);
+
+                        $container->setDefinition($id, $def);
+
+                        $alias = $this->serviceIdGenerator->generateFormTypeAlias($this->bundle, $class);
+
+                        $types[$alias] = $id;
+
+                        $container->getDefinition('form.extension')->replaceArgument(1, $types);
+                    }
 
                 }
 

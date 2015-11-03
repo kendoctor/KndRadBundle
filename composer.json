@@ -12,7 +12,8 @@
         "php":                      ">=5.4",
         "symfony/symfony":          "~2.4",
         "nelmio/alice":             "~1.5",
-        "fzaninotto/faker":         "~1.2"
+        "fzaninotto/faker":         "~1.2",
+        "knplabs/knp-paginator-bundle":       "^2.4"
     },
     "require-dev": {
         "behat/behat":                        "~3.0",
@@ -23,8 +24,7 @@
         "symfony/swiftmailer-bundle":         "~2.3",
         "doctrine/orm":                       "~2.4",
         "doctrine/doctrine-fixtures-bundle":  "*",
-        "twig/twig":                          "~1",
-        "knplabs/knp-paginator-bundle":       "^2.4"
+        "twig/twig":                          "~1"
     },
     "suggest": {
         "symfony/form":                      "To take advantage of the Rad Form Manager",

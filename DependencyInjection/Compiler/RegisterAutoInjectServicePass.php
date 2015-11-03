@@ -28,6 +28,148 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
     }
 
 
+    protected function getClasses($dirs, $ignoreSuffix = array())
+    {
+        $classes = array();
+        foreach ($dirs as $dir) {
+            $directory = sprintf("%s/%s", $this->bundle->getPath(), $dir);
+            $namespace = sprintf("%s\\%s", $this->bundle->getNamespace(), $dir);
+            $classes = array_merge($classes, $this->classFinder->findClasses($directory, $namespace, $ignoreSuffix));
+        }
+
+        return $classes;
+    }
+
+    protected function injectClassContainerParameter(ContainerBuilder $container, $class)
+    {
+        $classContainerParameter = $this->serviceIdGenerator->generateClassContainerParameter($this->bundle, $class);
+
+        if (!$container->hasParameter($classContainerParameter)) {
+            $container->setParameter($classContainerParameter, $class);
+        }
+
+        return $classContainerParameter;
+    }
+
+    protected function injectServicesRelatedEntity(ContainerBuilder $container)
+    {
+        $config = $container->getParameter('knd_rad.auto_inject.entity');
+
+        foreach($this->getClasses($config['dirs'], $config['ignore_suffix']) as $class)
+        {
+            $classContainerParameter = $this->injectClassContainerParameter($container, $class);
+
+            if($config['repository'])
+            {
+                $this->injectDoctrineRepositoryService($container, $class, $classContainerParameter);
+            }
+
+            if($config['manager'])
+            {
+                $this->injectClassManagerService($container, $class, $classContainerParameter);
+            }
+        }
+    }
+
+    protected function injectDoctrineRepositoryService(ContainerBuilder $container, $class, $classContainerParameter)
+    {
+        if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+            return;
+        }
+
+        $id = $this->serviceIdGenerator->generateClassRepositoryId($this->bundle, $class);
+
+        if ($container->hasDefinition($id)) {
+            return;
+        }
+
+        $def = $this->definitionFactory->createDoctrineRepositoryDefinition($classContainerParameter);
+
+        $container->setDefinition($id, $def);
+    }
+
+    protected function injectClassManagerService(ContainerBuilder $container, $class, $classContainerParameter)
+    {
+        if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+            return;
+        }
+
+        $id = $this->serviceIdGenerator->generateClassManagerId($this->bundle, $class);
+
+        if ($container->hasDefinition($id)) {
+            return;
+        }
+
+        $def = $this->definitionFactory->createClassManagerDefinition($classContainerParameter);
+
+        $container->setDefinition($id, $def);
+    }
+
+    protected function injectFormTypeServices(ContainerBuilder $container)
+    {
+        if (false === $container->hasDefinition('form.extension')) {
+            return;
+        }
+
+        $config = $container->getParameter('knd_rad.auto_inject.form_type');
+        $types   = $container->getDefinition('form.extension')->getArgument(1);
+
+        foreach($this->getClasses($config['dirs']) as $class)
+        {
+            $classContainerParameter = $this->injectClassContainerParameter($container, $class);
+
+            $reflClass = $this->reflectionFactory->createReflectionClass($class);
+
+            if ($reflClass->implementsInterface('Symfony\Component\Form\FormTypeInterface')) {
+
+                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+                        continue;
+                    }
+
+                    $id = $this->serviceIdGenerator->generateFormTypeId($this->bundle, $class);
+
+                    if ($container->hasDefinition($id)) {
+                        continue;
+                    }
+
+                    $def = $this->definitionFactory->createFormTypeDefinition($class, $classContainerParameter);
+
+                    $container->setDefinition($id, $def);
+
+                    $alias = $this->serviceIdGenerator->generateFormTypeAlias($this->bundle, $class);
+
+                    $types[$alias] = $id;
+            }
+
+        }
+
+        $container->getDefinition('form.extension')->replaceArgument(1, $types);
+    }
+
+    protected function injectCommonServices(ContainerBuilder $container)
+    {
+        $config = $container->getParameter('knd_rad.auto_inject.common');
+
+        foreach($this->getClasses($config['dirs']) as $class)
+        {
+            if (!strpos($class, $this->bundle->getNamespace()) === 0) {
+                continue;
+            }
+
+            $id = $this->serviceIdGenerator->generateServiceId($this->bundle, $class);
+
+            if ($container->hasDefinition($id)) {
+                continue;
+            }
+
+            $classContainerParameter = $this->injectClassContainerParameter($container, $class);
+            $def = $this->definitionFactory->createDefinition($class, $classContainerParameter);
+
+            $container->setDefinition($id, $def);
+        }
+
+    }
+
     /**
      * You can modify the container here before it is dumped to PHP code.
      *
@@ -35,138 +177,12 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-//        if (!$container->getParameter('knp_rad.detect.entity')) {
-//            return;
-//        }
 
-        if (false === $container->hasDefinition('doctrine')) {
-            return;
-        }
+        $this->injectCommonServices($container);
 
-        $includeDirs = array(
-            'Entity',
-            'Manager',
-            'Repository',
-            'Builder',
-            'Form'
-        );
+        $this->injectServicesRelatedEntity($container);
 
-        foreach($includeDirs as $dir)
-        {
-            $directory = sprintf("%s/%s", $this->bundle->getPath(), $dir);
-            $namespace = sprintf("%s\\%s", $this->bundle->getNamespace(), $dir);
-            $classes = $this->classFinder->findClasses($directory, $namespace);
-
-            foreach ($classes as $class) {
-                $classContainerParameter = null;
-
-                $reflClass = $this->reflectionFactory->createReflectionClass($class);
-
-                if($reflClass->isAbstract())
-                    continue;
-
-                if($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectClassParameterInterface'))
-                {
-                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
-                        continue;
-                    }
-                    $classContainerParameter = $this->serviceIdGenerator->generateClassContainerParameter($this->bundle, $class);
-
-                    if ($container->hasParameter($classContainerParameter)) {
-                        continue;
-                    }
-
-                    $container->setParameter($classContainerParameter, $class);
-                }
-
-                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectServiceInterface')) {
-
-                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
-                        continue;
-                    }
-
-                    $id = $this->serviceIdGenerator->generateServiceId($this->bundle, $class);
-
-                    if ($container->hasDefinition($id)) {
-                        continue;
-                    }
-
-                    $def = $this->definitionFactory->createDefinition($class, $classContainerParameter);
-
-                    $container->setDefinition($id, $def);
-
-                }
-
-                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectDoctrineRepositoryInterface')) {
-
-                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
-                        continue;
-                    }
-                    $id = $this->serviceIdGenerator->generateClassRepositoryId($this->bundle, $class);
-
-                    if ($container->hasDefinition($id)) {
-                        continue;
-                    }
-
-                    $def = $this->definitionFactory->createDoctrineRepositoryDefinition($classContainerParameter);
-
-                    $container->setDefinition($id, $def);
-
-                }
-
-                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectManagerByFactoryInterface')) {
-
-                    if (!strpos($class, $this->bundle->getNamespace()) === 0) {
-                        continue;
-                    }
-
-                    $id = $this->serviceIdGenerator->generateClassManagerId($this->bundle, $class);
-
-                    if ($container->hasDefinition($id)) {
-                        continue;
-                    }
-
-                    $def = $this->definitionFactory->createClassManagerDefinition($classContainerParameter);
-
-                    $container->setDefinition($id, $def);
-
-                }
-
-                if ($reflClass->implementsInterface('Knd\Bundle\RadBundle\TagInterface\AutoInjectFormTypeInterface')
-                    && $reflClass->implementsInterface('Symfony\Component\Form\FormTypeInterface')
-                ) {
-
-                    if (false !== $container->hasDefinition('form.extension')) {
-
-                        if (!strpos($class, $this->bundle->getNamespace()) === 0) {
-                            continue;
-                        }
-
-                        $id = $this->serviceIdGenerator->generateFormTypeId($this->bundle, $class);
-
-                        if ($container->hasDefinition($id)) {
-                            continue;
-                        }
-
-                        $types   = $container->getDefinition('form.extension')->getArgument(1);
-
-
-                        $def = $this->definitionFactory->createFormTypeDefinition($class, $classContainerParameter);
-
-                        $container->setDefinition($id, $def);
-
-                        $alias = $this->serviceIdGenerator->generateFormTypeAlias($this->bundle, $class);
-
-                        $types[$alias] = $id;
-
-                        $container->getDefinition('form.extension')->replaceArgument(1, $types);
-                    }
-
-                }
-
-            }
-
-        }
+        $this->injectFormTypeServices($container);
 
     }
 }

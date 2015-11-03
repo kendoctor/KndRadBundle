@@ -12,7 +12,8 @@ namespace Knd\Bundle\RadBundle\DependencyInjection;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Configuration implements ConfigurationInterface{
+class Configuration implements ConfigurationInterface
+{
 
     /**
      * Generates the configuration tree builder.
@@ -24,9 +25,48 @@ class Configuration implements ConfigurationInterface{
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('knd_rad');
 
-        // Here you should define the parameters that are allowed to
-        // configure your bundle. See the documentation linked above for
-        // more information on that topic.
+        $rootNode
+            ->children()
+                ->arrayNode('auto_inject')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('entity')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->arrayNode('dirs')
+                                    ->defaultValue(array('Entity'))
+                                    ->prototype('scalar')->end()
+                                ->end()
+                                ->booleanNode('manager')->defaultTrue()->end()
+                                ->booleanNode('repository')->defaultTrue()->end()
+                                ->arrayNode('ignore_suffix')
+                                    ->defaultValue(array('Repository'))
+                                    ->prototype('scalar')->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('form_type')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->arrayNode('dirs')
+                                    ->defaultValue(array('Form'))
+                                    ->prototype('scalar')->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('common')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->arrayNode('dirs')
+                                    ->defaultValue(array('Manager'))
+                                    ->prototype('scalar')->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
+        ;
 
         return $treeBuilder;
     }

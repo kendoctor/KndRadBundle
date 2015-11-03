@@ -17,7 +17,9 @@ class ClassFinder
         $this->reflectionFactory = $reflectionFactory ?: new ReflectionFactory();
     }
 
-    public function findClasses($directory, $namespace)
+
+
+    public function findClasses($directory, $namespace, $ignoreSuffix = array())
     {
         if (false === $this->filesystem->exists($directory)) {
             return array();
@@ -27,7 +29,15 @@ class ClassFinder
 
         $finder = new Finder();
         $finder->files();
-        $finder->name('*.php');
+        if(count($ignoreSuffix))
+        {
+            $finder->name(sprintf('/(?<!%s)\.php$/', implode('|', $ignoreSuffix)));
+        }
+        else
+        {
+            $finder->name('*.php');
+        }
+
         $finder->in($directory);
 
         foreach ($finder->getIterator() as $name) {

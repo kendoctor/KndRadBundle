@@ -5,6 +5,7 @@ namespace Knd\Bundle\RadBundle\Form;
 use Doctrine\Common\Inflector\Inflector;
 use Knd\Bundle\RadBundle\Bundle\BundleGuesser;
 use Knd\Bundle\RadBundle\Reflection\ClassMetadataFetcher;
+use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormRegistryInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -66,7 +67,7 @@ class FormManager
         $bundleName = preg_replace('/Bundle$/', '', $bundle->getName());
         $bundleNamespace = $bundle->getNamespace();
 
-        $alias = sprintf('%s_%s%s', strtolower($bundleName), $currentPurpose, strtolower($this->fetcher->getShortClassName($object)));
+        $alias = sprintf('%s_%s%s', Container::underscore($bundleName), $currentPurpose, strtolower($this->fetcher->getShortClassName($object)));
 
         $class = sprintf('%s\\Form\\%s%sType', $bundleNamespace, Inflector::classify($purpose), $this->fetcher->getShortClassName($object));
 

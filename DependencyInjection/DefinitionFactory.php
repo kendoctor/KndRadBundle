@@ -15,7 +15,7 @@ class DefinitionFactory
         $this->reflectionFactory = $reflectionFactory ?: new ReflectionFactory();
     }
 
-    protected function  createReference($serviceId)
+    public function  createReference($serviceId)
     {
         return new Reference($serviceId);
     }
@@ -53,11 +53,31 @@ class DefinitionFactory
 
     public function createDoctrineRepositoryDefinition($classContainerParameter)
     {
-        $definition = new Definition();
-        $definition->setClass('Doctrine\Common\Persistence\ObjectRepository');
-        $definition->setFactoryService('doctrine');
-        $definition->setFactoryMethod('getRepository');
-        $definition->setArguments(array(sprintf('%%%s%%', $classContainerParameter)));
+        $definition = new Definition('Knd\Bundle\RadBundle\Repository\EntityRepository');
+
+        $definition->setArguments(array(
+            $this->createReference('doctrine.orm.entity_manager'),
+            $this->getClassMetadataDefinition($classContainerParameter)
+        ));
+
+//        $definition = new Definition();
+//        $definition->setClass('Doctrine\Common\Persistence\ObjectRepository');
+//        $definition->setFactoryService('doctrine');
+//        $definition->setFactoryMethod('getRepository');
+//        $definition->setArguments(array(sprintf('%%%s%%', $classContainerParameter)));
+
+        return $definition;
+    }
+
+    protected function getClassMetadataDefinition($classContainerParameter)
+    {
+        $definition = new Definition('Doctrine\ORM\Mapping\ClassMetadata');
+        $definition
+            ->setFactoryService('doctrine.orm.entity_manager')
+            ->setFactoryMethod('getClassMetadata')
+            ->setArguments(array(sprintf('%%%s%%', $classContainerParameter)))
+            ->setPublic(false)
+        ;
 
         return $definition;
     }
@@ -65,13 +85,15 @@ class DefinitionFactory
     public function createClassManagerDefinition($classContainerParameter)
     {
         $definition = new Definition();
-        $definition->setClass('Knd\Bundle\Manager\Manager');
-        $definition->setFactoryService('knd.factory.manager');
+        $definition->setClass('Knd\Bundle\RadBundle\Manager\Manager');
+        $definition->setFactoryService('knd_rad.manager.factory');
         $definition->setFactoryMethod('create');
         $definition->setArguments(array(sprintf('%%%s%%', $classContainerParameter)));
 
         return $definition;
     }
+
+
 
     public function createFormTypeDefinition($class, $classContainerParameter)
     {

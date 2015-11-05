@@ -2,19 +2,19 @@
 
 namespace Knd\Bundle\RadBundle\Manager;
 
+use Symfony\Component\DependencyInjection\Container;
+
 class ManagerFactory
 {
-    protected $knpPaginator;
-    protected $entityManager;
+    private $container;
 
-    public function __construct($entityManager, $knpPaginator = null)
+    public function __construct(Container $container)
     {
-        $this->entityManager = $entityManager;
-        $this->knpPaginator = $knpPaginator;
+        $this->container = $container;
     }
 
     public function create($class)
     {
-        return new Manager($class, $this->entityManager, $this->knpPaginator);
+        return new Manager($class, $this->container);
     }
 }

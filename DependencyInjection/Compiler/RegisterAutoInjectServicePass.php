@@ -170,7 +170,7 @@ class RegisterAutoInjectServicePass implements CompilerPassInterface
             {
                 continue;
             }
-            
+
             if (!strpos($class, $this->bundle->getNamespace()) === 0) {
                 continue;
             }

@@ -1,6 +1,45 @@
 
 services:
-    knd_rad.factory.manager:
+    knd_rad.manager.factory:
         class: Knd\Bundle\RadBundle\Manager\ManagerFactory
         arguments:
-            - @doctrine.orm.entity_manager
+            - @service_container
+
+    knd_rad.view.listener:
+        class: Knd\Bundle\RadBundle\EventListener\ViewListener
+        arguments:
+            - @templating
+            - @knd_rad.view.name_deducer
+        tags:
+            - { name: kernel.event_listener, event: kernel.view, method: onKernelView }
+
+    knd_rad.bundle.guesser:
+        class: Knd\Bundle\RadBundle\Bundle\BundleGuesser
+        arguments:
+            - @kernel
+            - @knd_rad.reflection.factory
+            - []
+
+    knd_rad.reflection.factory:
+        class: Knd\Bundle\RadBundle\Reflection\ReflectionFactory
+
+    knd_rad.view.name_deducer:
+        class: Knd\Bundle\RadBundle\View\NameDeducer
+        arguments:
+            - @service_container
+            - @templating
+            - @controller_name_converter
+            - @knd_rad.bundle.guesser
+
+    knd_rad.form.manager:
+        class: Knd\Bundle\RadBundle\Form\FormManager
+        arguments:
+            - @knd_rad.reflection.metadata_fetcher
+            - @form.factory
+            - @form.registry
+            - @knd_rad.bundle.guesser
+            - @request_stack
+
+    knd_rad.reflection.metadata_fetcher:
+        class: Knd\Bundle\RadBundle\Reflection\ClassMetadataFetcher
+        public: false

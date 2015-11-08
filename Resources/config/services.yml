@@ -5,6 +5,15 @@ services:
         arguments:
             - @service_container
 
+    knd_rad.security.voter.factory:
+        class: Knd\Bundle\RadBundle\Security\Voter\VoterFactory
+
+    knd_rad.security.voter.stack:
+        class: Knd\Bundle\RadBundle\Security\Voter\VoterStack
+        arguments:
+            - []
+
+
     knd_rad.view.listener:
         class: Knd\Bundle\RadBundle\EventListener\ViewListener
         arguments:

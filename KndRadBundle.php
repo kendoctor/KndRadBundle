@@ -8,8 +8,15 @@
 
 namespace Knd\Bundle\RadBundle;
 
+use Knd\Bundle\RadBundle\DependencyInjection\Compiler\VoterStackPass;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class KndRadBundle extends  Bundle {
+
+    public function build(ContainerBuilder $container)
+    {
+        $container->addCompilerPass(new VoterStackPass());
+    }
 
 }

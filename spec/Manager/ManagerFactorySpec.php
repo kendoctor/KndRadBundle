@@ -7,8 +7,8 @@ use Prophecy\Argument;
 
 class ManagerFactorySpec extends ObjectBehavior
 {
-    function it_is_initializable()
-    {
-        $this->shouldHaveType('Knd\Bundle\RadBundle\Manager\ManagerFactory');
-    }
+//    function it_is_initializable()
+//    {
+//        $this->shouldHaveType('Knd\Bundle\RadBundle\Manager\ManagerFactory');
+//    }
 }

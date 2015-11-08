@@ -7,8 +7,8 @@ use Prophecy\Argument;
 
 class RegisterAutoInjectServicePassSpec extends ObjectBehavior
 {
-    function it_is_initializable()
-    {
-        $this->shouldHaveType('Knd\Bundle\RadBundle\DependencyInjection\Compiler\RegisterAutoInjectServicePass');
-    }
+//    function it_is_initializable()
+//    {
+//        $this->shouldHaveType('Knd\Bundle\RadBundle\DependencyInjection\Compiler\RegisterAutoInjectServicePass');
+//    }
 }

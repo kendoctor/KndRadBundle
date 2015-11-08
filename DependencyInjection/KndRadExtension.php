@@ -30,7 +30,6 @@ class KndRadExtension extends Extension {
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('knd_rad.auto_inject.entity', $config['auto_inject']['entity']);
-        $container->setParameter('knd_rad.auto_inject.form_type', $config['auto_inject']['form_type']);
         $container->setParameter('knd_rad.auto_inject.common', $config['auto_inject']['common']);
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));

@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller as BaseController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * Class Controller
@@ -30,42 +31,57 @@ class Controller extends BaseController
         return $this->get('router');
     }
 
-    /**
-     * @param string $route
-     * @param array $parameters
-     * @param int $status
-     * @return RedirectResponse
-     */
-    protected function redirectToRoute($route, array $parameters = array(), $status = 302)
-    {
-        return new RedirectResponse($this->getRouter()->generate($route, $parameters), $status);
-    }
+//    /**
+//     * @param string $route
+//     * @param array $parameters
+//     * @param int $status
+//     * @return RedirectResponse
+//     */
+//    protected function redirectToRoute($route, array $parameters = array(), $status = 302)
+//    {
+//        return new RedirectResponse($this->getRouter()->generate($route, $parameters), $status);
+//    }
+
+//    /**
+//     * @param string $message
+//     * @param \Exception $previous
+//     * @return AccessDeniedException
+//     */
+//    protected function createAccessDeniedException($message = 'Access Denied', \Exception $previous = null)
+//    {
+//        return new AccessDeniedException($message, $previous);
+//    }
+
+//    /**
+//     * @param mixed $attributes
+//     * @param null $object
+//     * @return mixed
+//     */
+//    protected function isGranted($attributes, $object = null)
+//    {
+//        return $this->getSecurity()->isGranted($attributes, $object);
+//    }
 
     /**
-     * @param mixed $attributes
+     * @param $attributes
      * @param null $object
      */
-    protected function isGranted($attributes, $object = null)
+    protected function isGrantedOr403($attributes, $object = null)
     {
+        if (!$this->isGranted($attributes, $object)) {
+            throw $this->createAccessDeniedException();
+        }
     }
-
-    /**
-     * @param $object
-     * @param array $criteria
-     */
-    protected function isGrantedOr403($object, $criteria = array())
-    {
-    }
-
-    /**
-     * @param string $type
-     * @param string $message
-     * @return mixed
-     */
-    protected function addFlash($type, $message)
-    {
-        return $this->getFlashBag()->add($type, $message);
-    }
+//
+//    /**
+//     * @param string $type
+//     * @param string $message
+//     * @return mixed
+//     */
+//    protected function addFlash($type, $message)
+//    {
+//        return $this->getFlashBag()->add($type, $message);
+//    }
 
     /**
      * @param $object

@@ -18,8 +18,34 @@ class ClassFinder
     }
 
 
+    public function findClasses($dirs, $basePath, $namespace, $pattern = '*.php')
+    {
+        //echo $basePath;
+        $classes = array();
 
-    public function findClasses($directory, $namespace, $ignoreSuffix = array())
+        foreach ($dirs as $dir) {
+            if (false === $this->filesystem->exists($dir)) {
+                continue;
+            }
+
+            $finder = new Finder();
+            $finder->files();
+            $finder->name($pattern);
+            $finder->in($dir);
+
+            foreach ($finder->getIterator() as $name) {
+
+                $baseName = substr($name, strlen($basePath)+1, -4);
+                $baseClassName = str_replace('/', '\\', $baseName);
+
+                $classes[] = $namespace.'\\'.$baseClassName;
+            }
+        }
+
+        return $classes;
+    }
+
+    public function find2Classes($directory, $namespace, $ignoreSuffix = array())
     {
         if (false === $this->filesystem->exists($directory)) {
             return array();
@@ -41,9 +67,9 @@ class ClassFinder
         $finder->in($directory);
 
         foreach ($finder->getIterator() as $name) {
+
             $baseName = substr($name, strlen($directory)+1, -4);
             $baseClassName = str_replace('/', '\\', $baseName);
-
             $classes[] = $namespace.'\\'.$baseClassName;
         }
 

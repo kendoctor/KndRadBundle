@@ -3,8 +3,7 @@
 namespace Knd\Bundle\RadBundle\Manager;
 
 use Doctrine\ORM\EntityManager;
-use Knd\Bundle\RadBundle\Bundle\BundleGuesser;
-use Knd\Bundle\RadBundle\DependencyInjection\ServiceIdGenerator;
+use Knd\Bundle\RadBundle\DependencyInjection\ContainerIdGenerator;
 use Knd\Bundle\RadBundle\Form\FormManager;
 use Knd\Bundle\RadBundle\Repository\EntityRepository;
 use Knp\Component\Pager\PaginatorInterface;
@@ -31,9 +30,9 @@ class Manager
 
 
     /**
-     * @var ServiceIdGenerator
+     * @var ContainerIdGenerator
      */
-    private $serviceIdGenerator;
+    private $containerIdGenerator;
 
     /**
      * @param $class
@@ -44,7 +43,7 @@ class Manager
         $this->class = $class;
         $this->container = $container;
 
-        $this->serviceIdGenerator = new ServiceIdGenerator();
+        $this->containerIdGenerator = new ContainerIdGenerator();
     }
 
 
@@ -112,6 +111,7 @@ class Manager
             $this->getEntityManager()->flush();
         }
     }
+
     /**
      * @return EntityManager
      */
@@ -133,9 +133,7 @@ class Manager
      */
     public function getRepository()
     {
-        $repositoryServiceId = $this->serviceIdGenerator->generateClassRepositoryId($this->getBundle(), $this->getClass());
-
-        return $this->get($repositoryServiceId);
+        return $this->get($this->containerIdGenerator->getEntityRepositoryServiceId($this->getClass()));
     }
 
     /**
@@ -184,6 +182,11 @@ class Manager
         return $this->container->get($serviceId);
     }
 
+
+    /**
+     * @param array $criteria
+     * @return mixed
+     */
     public function findBy($criteria = array())
     {
         $findMethod = is_scalar($criteria) ? 'find' : 'findOneBy';
@@ -191,6 +194,11 @@ class Manager
         return $repository->$findMethod($criteria);
     }
 
+
+    /**
+     * @param array $criteria
+     * @return mixed
+     */
     public function findOr404($criteria = array())
     {
         if ($result = $this->findBy($criteria)) {

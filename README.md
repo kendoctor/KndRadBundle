@@ -73,7 +73,7 @@ For class ``AppBundle\Generator\SomeGenerator``
    
         services:
             app.generator.some
-                class: %app.class.generator.some_generator%
+                class: %app.class.generator.some%
                 arguments: []
 
 If class suffix is same as root(relative bundle directory) directory, it will be trimmed.
@@ -91,179 +91,128 @@ If you want a newly added class to be automatically injected, you need clear cac
         php app/console cache:clear
     
 
- 
-   
+If the class constructor has parameters, for example:
+
+    namespace AppBundle\Builder;
+    use Knd\Bundle\RadBundle\DependencyInjection\AutoInjectInterface;
     
-The class name of ``User`` injected into container as parameter.
-
-    app.class.entity.user
-    
-You can access its class name via container:
-
-    $container->getParameter('app.class.entity.user') => AppBundle\Entity\User
-    
-    
-By default, doctrine repository and manager service of ``User`` entity injected, just as below:
-
-    services:
-        app.manager.user:
-            class: Knd\Bundle\RadBundle\Manager\Manager
-            factory: [@knd_rad.factory.manager, create]
-            arguments: [%app.class.entity.user%]    
-                 
-        app.repository.user:
-            class: Doctrine\Common\Persistence\ObjectRepository
-            factory: [@doctrine, getRepository]
-            arguments: [%app.class.entity.user%]
-
-Others possibilities:
-
-    AppBundle\Entity\Question\Selection => app.class.entity.question_selection
-    manager service => app.manager.question_selection
-    repository service => app.repository.question_selection
-    
-###Auto Inject Form Type Services###
-
-Default Form Type Directory is ``xxxBundle\Form``, for example:
-
-    namespace AppBundle\Form;
-    
-    class UserType extends AbstractType
+    class SomeBuilder implements AutoInjectInterface 
     {
-    }
-    
-Classes should implements ``Symfony\Component\Form\FormTypeInterface``, just as below:
-
-    services:
-        app.form.type.user:
-            class: %app.class.form.user_type%
-            tags: { name: form.type, alias: app_user }
-            
-Others possibilities:
-    
-    AppBundle\Form\Question\SelectionType => app.class.form.question_selection_type
-    form type service => app.form.type.question_selection
-    
-###Auto Inject Common Classes As Services###
-
-Default common classes directories has ``xxxBundle\Manager``, for example:
-
-    namespace AppBundle\Manager;
-
-    class UserManager extend Manager
-    {
-    }
-    
-It will inject ``UserManager`` as service:
-    
-    services:
-        app.manager.user:
-            class: %app.class.manager.user%
-            
-If ``UserManager`` constructor has parameters:
+        private $em;
+        private $class;
         
-        public function __construct(
-                $p_app__class__entity__user,
-                EntityManager $s_doctrine__orm__entity_manager
-            )
+        public function __construct($class, $em)
         {
+            $this->class = $class;
+            $this->em = $em;
         }
         
-It will inject as below:
-
-    services:
-        app.manager.user:
-            class: %app.class.manager.user%
-            arguments: 
-                - %app.class.entity.user%
-                - @doctrine.orm.entity_manager
-        
-You should follow naming convention:
- 
-    > ``$p_`` will be container parameter
-     
-    > ``$s_`` will be a service 
+        public static function getConstructorParameters()
+        {
+            return array(
+                '%app.class.entity.product%',
+                '@doctrine.orm.entity_manager'
+            );
+        }
+    }
     
-    > double ``_`` represents ``.``
-    
+As you can see:
 
-> **NOTE**
+  1. %app.class.entity.product% - will be a container parameter
+  2. @service_id - will be a service
+  
 
-Add new class into the specified directories, you should clear cache
+Other possibilities:
 
-    php app/console cache:clear
+Form Type services, classes should implement ``Symfony\Component\Form\FormInterface``
+
+    namespace AppBundle\Form\UserType
+    class UserType extends AbstractType
+        => app.class.form.user_type
+        => app.form.type.user
     
+Entity Repository services, class should extend ``Doctrine\ORM\EntityRepository``
+
+    AppBundle\Repository\UserRepository 
+        => app.class.repository.user #class container parameter
+        => app.repository.user #service id
+
+Default repository class directory is ``Repository``, 
+If you want repository classes stay in the same dir with entity:
     
-##Configuration##
+    //config.yml
+    knd_rad:
+        auto_inject:
+            entity:
+                repository:
+                    dir: Entity
+
+You also do not need specify entity class's repository in orm mapping:
+    
+    AppBundle\Entity\User
+        type: entity
+        repositoryClass: xxx # you can ignore this setting
+
+If entity has no repository class, it will auto use ``Knd\Bundle\RadBundle\Repository\EntityRepository``
+
+You can ignore auto feature by config:
+
+    //config.yml
+    knd_rad:
+        auto_inject:
+            entity:
+                repository:
+                    auto: false
+                    
+Manager services for entity classes, the manager classes should extend ``Knd\Bundle\RadBundle\Manager\Manager``
+
+Default manager class directory is ``Manager``:
+
+    AppBundle\Manager\UserManager
+        => app.class.manager.user #class container parameter
+        => app.manager.user #service id 
+
+If entity has no manager class, it will auto use ``Knd\Bundle\RadBundle\Manager\Manager``.
+
+You can ignore auto feature by config:
+
+    //config.yml
+    knd_rad:
+        auto_inject:
+            entity:
+                manager:
+                    auto: false
+                    
+
+Model class voter services, default directory is ``Security/Voter``,
+Voter classes should extend ``Knd\Bundl\RadBundle\Security\Voter\AbstractVoter``
+
+    AppBundle\Security\Voter\UserVoter
+        => app.class.security.voter_user_voter
+        => app.security.voter.user # the service is private, you can not access it from container
+
+
+##Configuation##
 
     knd_rad:
         auto_inject:
             entity:
-                dirs: [Entity] 
-                manager: true #auto inject manager, you can bypass via creating service with same service id
-                repository: true #auto inject doctrine repository
-                ignore_suffix: [Repository] #exclude classes suffixed with Repository
+                dirs: [Entity]
+                classes: []
+                exclude_classes: []
+                repository:
+                    auto: true
+                    dir: Repository
+                manager:
+                    auto: true
+                    dir: Manager
+                voter:
+                    auto: true
+                    dir: Security/Voter
             common:
-                dirs: [Manager, Repository, Form ]
-                exclude_dirs: []
+                dirs: [Form]
                 classes: []
                 exclude_classes: []
                 
-        
-        //get config of common
-        //get classes of dirs without exclude dirs, merge and exclude specified classes,
-        //if extends Knd\Bundle\RadBundle\Manager\Manager, auto inject as Entity Manager
-        //if extends Symfony\Component\Form\FormInterface , auto inject as Form Type
-        //if extends Doctrine\Common\ORM\EntityRepository, auto inject as Entity Repository
-
-        
-        //naming convention
-        1. class container parameter
-        AppBundle\Entity\User => app.class.entity.user
-        AppBundle\Entity\Question\Selection => app.class.entity.question_selection
-        KendoctorAppBundle\Entity\User => kendoctor_app.class.entity.user
-        KendoctorAppBundle\Entity\Question\Selection => kendoctor_app.class.entity.question_selection
-        
-        2. entity repository services
-        AppBundle\Entity\User => app.repository.user
-        AppBundle\Entity\UserRepository => app.repository.user
-        AppBundle\Repository\UserRepository => app.repository.user replace with before
-        AppBundle\Repository\Question\SelectionRepository => app.repository.question_selection
-                
-        
-        3. entity manager services
-        AppBundle\Entity\User => app.manager.user
-        AppBundle\Manager\UserManager => app.manager.user
-        AppBundle\Other\UserManager => app.manager.other_user
-        AppBundle\Manager\Other\UserManager => app.manager.other_user
-        
-        4. entity service info
-        $ids = getServiceIdByEntity($class)
-        
-        
-   
-        //user roles: edit => pass, owner.edit
-        class SomeController extends Controller {
-        
-            public function someAction()
-            {
-                $this->isGrantedOr403('app.entity.user.edit', $user');
-            }
-            
-        }
-        
-        protected function isGranted($attribute, $object, $user = null)
-        {
-            //pass if super admin
-            //edit => none => xxx.edit => xxx()
-            
-           
-        
-        }
-        
-        
-        
-                  
-                  
                   
                   

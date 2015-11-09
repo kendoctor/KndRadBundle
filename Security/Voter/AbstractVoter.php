@@ -73,10 +73,15 @@ abstract class AbstractVoter extends BaseAbstractVoter implements VoterInterface
      */
     public function vote(TokenInterface $token, $object, array $attributes)
     {
-        if (is_string($object) && class_exists($object) && !$this->supportsClass($object)) {
-            return self::ACCESS_ABSTAIN;
+        if (is_string($object)) {
+            if(!class_exists($object))  {
+                throw new \Exception('class :%s does not exist.', $object);
+            }
 
-        }elseif (!is_object($object) || !$object || !$this->supportsClass(get_class($object))) {
+            if(!$this->supportsClass($object))
+                return self::ACCESS_ABSTAIN;
+
+        }elseif (!$object || !$this->supportsClass(get_class($object))) {
 
             return self::ACCESS_ABSTAIN;
         }
